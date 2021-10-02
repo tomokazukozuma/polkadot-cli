@@ -40,12 +40,13 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		c, _ := cmd.Flags().GetBool("create")
 		if c {
-			log.Println("address create called")
 			publicKey, privateKey, err := ed25519.GenerateKey(nil)
 			if err != nil {
 				log.Fatalf("Failed GenerateKey", err)
 			}
-			address := EncodeAddress(publicKey)
+
+			ss58Prefix, _ := cmd.Flags().GetInt8("ss58Prefix")
+			address := EncodeAddress(publicKey, ss58Prefix)
 
 			data := [][]string{
 				{"PrivateKey", fmt.Sprintf("%x", privateKey)},
@@ -53,8 +54,8 @@ to quickly create a Cobra application.`,
 				{"Address", fmt.Sprintf("%s", address)},
 			}
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetBorder(true)                                // Set Border to false
-			table.AppendBulk(data)                                // Add Bulk Data
+			table.SetBorder(true)
+			table.AppendBulk(data)
 			table.Render()
 
 		} else {
@@ -80,20 +81,16 @@ func init() {
 	// is called directly, e.g.:
 	// addressCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addressCmd.Flags().Bool("create", false,"create address")
+	addressCmd.Flags().Int8("ss58Prefix", 0,"SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
 }
 
 var (
 	prefix = []byte("SS58PRE")
 )
 
-func EncodeAddress(pubKey []byte) string {
+func EncodeAddress(pubKey []byte, ss58Prefix int8) string {
 	var raw []byte
-	addressType := []byte{0x00}
-	//if isTestnet {
-	//	// Westend is 42
-	//	addressType = []byte{0x2A}
-	//}
-	raw = append(addressType, pubKey...)
+	raw = append([]byte{byte(ss58Prefix)}, pubKey...)
 	checksum := blake2b.Sum512(append(prefix, raw...))
 	address := base58.Encode(append(raw, checksum[0:2]...))
 	return address
