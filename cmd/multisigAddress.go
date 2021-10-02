@@ -18,11 +18,13 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
-	"golang.org/x/crypto/blake2b"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
+	"golang.org/x/crypto/blake2b"
 
 	"github.com/spf13/cobra"
 )
@@ -58,10 +60,10 @@ to quickly create a Cobra application.`,
 
 			var publicKeys [][]byte
 			for _, address := range addresses {
-				publicKey, _, _:= DecodeAddress(address)
+				publicKey, _, _ := encode.DecodeAddress(address)
 				publicKeys = append(publicKeys, publicKey)
 			}
-			sort.Slice(publicKeys, func(i,j int) bool {
+			sort.Slice(publicKeys, func(i, j int) bool {
 				return bytes.Compare(publicKeys[i], publicKeys[j]) < 0
 			})
 			var payload []byte
@@ -74,7 +76,7 @@ to quickly create a Cobra application.`,
 			}
 			payload = append(payload, threshold, 0x00)
 			multisigPubKey := blake2b.Sum256(payload)
-			address := EncodeAddress(multisigPubKey[:], ss58Prefix)
+			address := encode.EncodeAddress(multisigPubKey[:], ss58Prefix)
 			data := [][]string{
 				{"Multisig PublicKey", fmt.Sprintf("%x", multisigPubKey)},
 				{"Address", fmt.Sprintf("%s", address)},
@@ -99,8 +101,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// multisigAddressCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	multisigAddressCmd.Flags().Bool("create", false,"create address")
-	multisigAddressCmd.Flags().StringSlice("addresses", nil,"addresses")
-	multisigAddressCmd.Flags().Uint8("threshold", 0,"threshold")
-	multisigAddressCmd.Flags().Int8("ss58Prefix", 0,"SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
+	multisigAddressCmd.Flags().Bool("create", false, "create address")
+	multisigAddressCmd.Flags().StringSlice("addresses", nil, "addresses")
+	multisigAddressCmd.Flags().Uint8("threshold", 0, "threshold")
+	multisigAddressCmd.Flags().Int8("ss58Prefix", 0, "SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
 }

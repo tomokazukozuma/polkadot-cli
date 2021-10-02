@@ -16,16 +16,14 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/akamensky/base58"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/blake2b"
+	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
 )
 
 // addressCmd represents the address command
@@ -53,7 +51,7 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
 			}
-			address := EncodeAddress(publicKey, ss58Prefix)
+			address := encode.EncodeAddress(publicKey, ss58Prefix)
 
 			data := [][]string{
 				{"PrivateKey", fmt.Sprintf("%x", privateKey)},
@@ -75,7 +73,7 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				log.Fatalf("Failed Get create: %s", err.Error())
 			}
-			publicKey, ss58Prefix, err := DecodeAddress(address)
+			publicKey, ss58Prefix, err := encode.DecodeAddress(address)
 			if err != nil {
 				log.Fatalf("Failed Get create: %s", err.Error())
 			}
@@ -89,12 +87,7 @@ to quickly create a Cobra application.`,
 			table.AppendBulk(data)
 			table.Render()
 		}
-
 	},
-}
-
-type option struct {
-	create bool
 }
 
 func init() {
@@ -109,33 +102,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// addressCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	addressCmd.Flags().Bool("create", false,"create address")
-	addressCmd.Flags().Int8("ss58Prefix", 0,"SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
-	addressCmd.Flags().Bool("decode", false,"decode address")
-	addressCmd.Flags().String("address", "","address")
-}
-
-var (
-	prefix = []byte("SS58PRE")
-)
-
-func EncodeAddress(pubKey []byte, ss58Prefix int8) string {
-	var raw []byte
-	raw = append([]byte{byte(ss58Prefix)}, pubKey...)
-	checksum := blake2b.Sum512(append(prefix, raw...))
-	address := base58.Encode(append(raw, checksum[0:2]...))
-	return address
-}
-
-func DecodeAddress(address string) (publicKey []byte, ss58Prefix int8, err error) {
-	raw, err := base58.Decode(address)
-	if err != nil {
-		return nil, 0, err
-	}
-	actualChecksum := raw[len(raw)-4:]
-	checksum := blake2b.Sum512(raw[:len(raw)])
-	if bytes.Equal(actualChecksum, checksum[:]) {
-		return nil, 0, fmt.Errorf("Invalid checksum. actualChecksum: %s, checksum: %s", actualChecksum, checksum)
-	}
-	return raw[1:33], int8(raw[0]), nil
+	addressCmd.Flags().Bool("create", false, "create address")
+	addressCmd.Flags().Int8("ss58Prefix", 0, "SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
+	addressCmd.Flags().Bool("decode", false, "decode address")
+	addressCmd.Flags().String("address", "", "address")
 }
