@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"fmt"
 	"log"
@@ -38,14 +39,20 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		c, _ := cmd.Flags().GetBool("create")
+		c, err := cmd.Flags().GetBool("create")
+		if err != nil {
+			log.Fatalf("Failed Get create: %s", err.Error())
+		}
 		if c {
 			publicKey, privateKey, err := ed25519.GenerateKey(nil)
 			if err != nil {
 				log.Fatalf("Failed GenerateKey", err)
 			}
 
-			ss58Prefix, _ := cmd.Flags().GetInt8("ss58Prefix")
+			ss58Prefix, err := cmd.Flags().GetInt8("ss58Prefix")
+			if err != nil {
+				log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
+			}
 			address := EncodeAddress(publicKey, ss58Prefix)
 
 			data := [][]string{
@@ -57,10 +64,32 @@ to quickly create a Cobra application.`,
 			table.SetBorder(true)
 			table.AppendBulk(data)
 			table.Render()
-
-		} else {
-			fmt.Println("address called")
 		}
+
+		d, err := cmd.Flags().GetBool("decode")
+		if err != nil {
+			log.Fatalf("Failed Get create: %s", err.Error())
+		}
+		if d {
+			address, err := cmd.Flags().GetString("address")
+			if err != nil {
+				log.Fatalf("Failed Get create: %s", err.Error())
+			}
+			publicKey, ss58Prefix, err := DecodeAddress(address)
+			if err != nil {
+				log.Fatalf("Failed Get create: %s", err.Error())
+			}
+			data := [][]string{
+				{"Address", fmt.Sprintf("%s", address)},
+				{"PublicKey", fmt.Sprintf("%x", publicKey)},
+				{"ss58Prefix", fmt.Sprintf("%d", ss58Prefix)},
+			}
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetBorder(true)
+			table.AppendBulk(data)
+			table.Render()
+		}
+
 	},
 }
 
@@ -82,6 +111,8 @@ func init() {
 	// addressCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	addressCmd.Flags().Bool("create", false,"create address")
 	addressCmd.Flags().Int8("ss58Prefix", 0,"SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
+	addressCmd.Flags().Bool("decode", false,"decode address")
+	addressCmd.Flags().String("address", "","address")
 }
 
 var (
@@ -94,4 +125,17 @@ func EncodeAddress(pubKey []byte, ss58Prefix int8) string {
 	checksum := blake2b.Sum512(append(prefix, raw...))
 	address := base58.Encode(append(raw, checksum[0:2]...))
 	return address
+}
+
+func DecodeAddress(address string) (publicKey []byte, ss58Prefix int8, err error) {
+	raw, err := base58.Decode(address)
+	if err != nil {
+		return nil, 0, err
+	}
+	actualChecksum := raw[len(raw)-4:]
+	checksum := blake2b.Sum512(raw[:len(raw)])
+	if bytes.Equal(actualChecksum, checksum[:]) {
+		return nil, 0, fmt.Errorf("Invalid checksum. actualChecksum: %s, checksum: %s", actualChecksum, checksum)
+	}
+	return raw[1:33], int8(raw[0]), nil
 }
