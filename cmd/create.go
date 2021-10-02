@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -37,9 +38,38 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		publicKey, privateKey, err := ed25519.GenerateKey(nil)
+		var (
+			privateKey []byte
+			publicKey  []byte
+		)
+		stringPrivateKey, err := cmd.Flags().GetString("privateKey")
 		if err != nil {
-			log.Fatalf("Failed GenerateKey", err)
+			log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
+		}
+		stringPublicKey, err := cmd.Flags().GetString("publicKey")
+		if err != nil {
+			log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
+		}
+		if stringPrivateKey != "" {
+			p, err := hex.DecodeString(stringPrivateKey)
+			if err != nil {
+				log.Fatalf("Failed Decode privateKey: %s", err.Error())
+			}
+			extendedPrivateKey := ed25519.NewKeyFromSeed(p)
+			privateKey = extendedPrivateKey[:32]
+			publicKey = extendedPrivateKey[32:]
+		} else if stringPublicKey != "" {
+			publicKey, err = hex.DecodeString(stringPublicKey)
+			if err != nil {
+				log.Fatalf("Failed Decode privateKey: %s", err.Error())
+			}
+		} else {
+			_, extendedPrivateKey, err := ed25519.GenerateKey(nil)
+			if err != nil {
+				log.Fatalf("Failed GenerateKey", err)
+			}
+			privateKey = extendedPrivateKey[:32]
+			publicKey = extendedPrivateKey[32:]
 		}
 
 		ss58Prefix, err := cmd.Flags().GetInt8("ss58Prefix")
@@ -72,5 +102,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	createCmd.Flags().String("privateKey", "", "private key")
+	createCmd.Flags().String("publicKey", "", "public key")
 	createCmd.Flags().Int8("ss58Prefix", 0, "SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
 }
