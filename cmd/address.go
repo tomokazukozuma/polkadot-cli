@@ -17,11 +17,12 @@ package cmd
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/akamensky/base58"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/blake2b"
 )
@@ -45,9 +46,16 @@ to quickly create a Cobra application.`,
 				log.Fatalf("Failed GenerateKey", err)
 			}
 			address := EncodeAddress(publicKey)
-			log.Printf("privateKey: %x", privateKey)
-			log.Printf("publicKey: %x", publicKey)
-			log.Printf("address: %s", address)
+
+			data := [][]string{
+				{"PrivateKey", fmt.Sprintf("%x", privateKey)},
+				{"PublicKey", fmt.Sprintf("%x", publicKey)},
+				{"Address", fmt.Sprintf("%s", address)},
+			}
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetBorder(true)                                // Set Border to false
+			table.AppendBulk(data)                                // Add Bulk Data
+			table.Render()
 
 		} else {
 			fmt.Println("address called")
@@ -71,22 +79,13 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// addressCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	var o = &option{}
-	addressCmd.Flags().BoolVar(&o.create, "create", false,"create address")
-}
-
-func GenerateRandom(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
+	addressCmd.Flags().Bool("create", false,"create address")
 }
 
 var (
 	prefix = []byte("SS58PRE")
 )
+
 func EncodeAddress(pubKey []byte) string {
 	var raw []byte
 	addressType := []byte{0x00}
