@@ -79,8 +79,8 @@ to quickly create a Cobra application.`,
 		address := encode.EncodeAddress(publicKey, ss58Prefix)
 
 		data := [][]string{
-			{"PrivateKey", fmt.Sprintf("%x", privateKey)},
-			{"PublicKey", fmt.Sprintf("%x", publicKey)},
+			{"PrivateKey", fmt.Sprintf("0x%x", privateKey)},
+			{"PublicKey", fmt.Sprintf("0x%x", publicKey)},
 			{"Address", fmt.Sprintf("%s", address)},
 		}
 		table := tablewriter.NewWriter(os.Stdout)

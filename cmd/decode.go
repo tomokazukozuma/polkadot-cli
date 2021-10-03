@@ -47,7 +47,7 @@ to quickly create a Cobra application.`,
 		}
 		data := [][]string{
 			{"Address", fmt.Sprintf("%s", address)},
-			{"PublicKey", fmt.Sprintf("%x", publicKey)},
+			{"PublicKey", fmt.Sprintf("0x%x", publicKey)},
 			{"ss58Prefix", fmt.Sprintf("%d", ss58Prefix)},
 		}
 		table := tablewriter.NewWriter(os.Stdout)

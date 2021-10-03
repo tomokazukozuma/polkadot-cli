@@ -72,7 +72,7 @@ to quickly create a Cobra application.`,
 		multisigPubKey := blake2b.Sum256(payload)
 		address := encode.EncodeAddress(multisigPubKey[:], ss58Prefix)
 		data := [][]string{
-			{"Multisig PublicKey", fmt.Sprintf("%x", multisigPubKey)},
+			{"Multisig PublicKey", fmt.Sprintf("0x%x", multisigPubKey)},
 			{"Address", fmt.Sprintf("%s", address)},
 		}
 		table := tablewriter.NewWriter(os.Stdout)
