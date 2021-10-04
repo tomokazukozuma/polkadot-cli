@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"crypto/ed25519"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -25,6 +26,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/text/unicode/norm"
 )
 
 // createCmd represents the create command
@@ -42,6 +45,11 @@ to quickly create a Cobra application.`,
 			privateKey []byte
 			publicKey  []byte
 		)
+		stringMnemonic, err := cmd.Flags().GetString("mnemonic")
+		if err != nil {
+			log.Fatalf("Failed Get mnemonic: %s", err.Error())
+		}
+		log.Printf("stringMnemonic: %s", stringMnemonic)
 		stringPrivateKey, err := cmd.Flags().GetString("privateKey")
 		if err != nil {
 			log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
@@ -50,7 +58,16 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
 		}
-		if stringPrivateKey != "" {
+		if stringMnemonic != "" {
+			stringPassphrase, err := cmd.Flags().GetString("passphrase")
+			if err != nil {
+				log.Fatalf("Failed Get passphrase: %s", err.Error())
+			}
+			seed := pbkdf2.Key(norm.NFKD.Bytes([]byte(stringMnemonic)), norm.NFKD.Bytes([]byte("mnemonic"+stringPassphrase)), 2048, 64, sha512.New)
+			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
+			privateKey = extendedPrivateKey[:32]
+			publicKey = extendedPrivateKey[32:]
+		} else if stringPrivateKey != "" {
 			p, err := hex.DecodeString(stringPrivateKey)
 			if err != nil {
 				log.Fatalf("Failed Decode privateKey: %s", err.Error())
@@ -102,6 +119,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	createCmd.Flags().String("mnemonic", "", "Mnemonic")
+	createCmd.Flags().String("passphrase", "", "passphrase")
 	createCmd.Flags().String("privateKey", "", "private key")
 	createCmd.Flags().String("publicKey", "", "public key")
 	createCmd.Flags().Int8("ss58Prefix", 0, "SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
