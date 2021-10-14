@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"os"
@@ -43,7 +44,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			log.Fatalf("Failed Get addresses: %s", err.Error())
 		}
-		threshold, err := cmd.Flags().GetUint8("threshold")
+		threshold, err := cmd.Flags().GetUint16("threshold")
 		if err != nil {
 			log.Fatalf("Failed Get threshold: %s", err.Error())
 		}
@@ -68,7 +69,9 @@ to quickly create a Cobra application.`,
 		for _, pubKey := range publicKeys {
 			payload = append(payload, pubKey...)
 		}
-		payload = append(payload, threshold, 0x00)
+		b := make([]byte, 2)
+		binary.LittleEndian.PutUint16(b, threshold)
+		payload = append(payload, b...)
 		multisigPubKey := blake2b.Sum256(payload)
 		address := encode.EncodeAddress(multisigPubKey[:], ss58Prefix)
 		data := [][]string{
@@ -95,6 +98,6 @@ func init() {
 	// is called directly, e.g.:
 	// createMultisigCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	createMultisigCmd.Flags().StringSlice("addresses", nil, "addresses")
-	createMultisigCmd.Flags().Uint8("threshold", 0, "threshold")
+	createMultisigCmd.Flags().Uint16("threshold", 0, "threshold")
 	createMultisigCmd.Flags().Int8("ss58Prefix", 0, "SS58Prefix 0: Polkadot, 2: Kusama, 42: Westend")
 }
