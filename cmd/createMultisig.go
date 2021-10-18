@@ -76,6 +76,7 @@ to quickly create a Cobra application.`,
 		address := encode.EncodeAddress(multisigPubKey[:], ss58Prefix)
 		data := [][]string{
 			{"Multisig PublicKey", fmt.Sprintf("0x%x", multisigPubKey)},
+			{"Threshold", fmt.Sprintf("%d", threshold)},
 			{"Address", fmt.Sprintf("%s", address)},
 		}
 		table := tablewriter.NewWriter(os.Stdout)
