@@ -21,9 +21,8 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
-
 	"github.com/spf13/cobra"
+	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
 )
 
 // decodeCmd represents the decode command

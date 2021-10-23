@@ -25,6 +25,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"github.com/tomokazukozuma/polkadot-cli/lib/bip39"
 	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/text/unicode/norm"
@@ -63,7 +64,11 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				log.Fatalf("Failed Get passphrase: %s", err.Error())
 			}
-			seed := pbkdf2.Key(norm.NFKD.Bytes([]byte(stringMnemonic)), norm.NFKD.Bytes([]byte("mnemonic"+stringPassphrase)), 2048, 64, sha512.New)
+			entropy, err := bip39.MnemonicToEntropy(stringMnemonic)
+			if err != nil {
+				log.Fatalf("Failed MnemonicToEntropy: %s", err.Error())
+			}
+			seed := pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic"+stringPassphrase)), 2048, 64, sha512.New)
 			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
 			privateKey = extendedPrivateKey[:32]
 			publicKey = extendedPrivateKey[32:]
