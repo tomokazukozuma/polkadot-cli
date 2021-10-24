@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"crypto/ed25519"
-	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -28,8 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tomokazukozuma/polkadot-cli/lib/bip39"
 	"github.com/tomokazukozuma/polkadot-cli/lib/encode"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/text/unicode/norm"
 )
 
 // createCmd represents the create command
@@ -70,7 +67,10 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				log.Fatalf("Failed MnemonicToEntropy: %s", err.Error())
 			}
-			seed := pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic"+stringPassphrase)), 2048, 64, sha512.New)
+			seed, err := bip39.MnemonicToSeed(stringMnemonic, stringPassphrase)
+			if err != nil {
+				log.Fatalf("Failed MnemonicToSeed: %s", err.Error())
+			}
 			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
 			privateKey = extendedPrivateKey[:32]
 			publicKey = extendedPrivateKey[32:]
@@ -93,11 +93,18 @@ to quickly create a Cobra application.`,
 				log.Fatalf("Failed Decode privateKey: %s", err.Error())
 			}
 		} else {
+			stringPassphrase, err := cmd.Flags().GetString("passphrase")
+			if err != nil {
+				log.Fatalf("Failed Get passphrase: %s", err.Error())
+			}
 			mnemonic, entropy, err := bip39.GenerateMnemonic()
 			if err != nil {
 				log.Fatalf("Failed GenerateMnemonic: %s", err.Error())
 			}
-			seed := pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic")), 2048, 64, sha512.New)
+			seed, err := bip39.MnemonicToSeed(stringMnemonic, stringPassphrase)
+			if err != nil {
+				log.Fatalf("Failed MnemonicToSeed: %s", err.Error())
+			}
 			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
 			privateKey = extendedPrivateKey[:32]
 			publicKey = extendedPrivateKey[32:]

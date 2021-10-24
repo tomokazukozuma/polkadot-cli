@@ -3,6 +3,7 @@ package bip39
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +11,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/text/unicode/norm"
 )
 
 func GenerateMnemonic() ([]string, []byte, error) {
@@ -35,6 +39,13 @@ func GenerateMnemonic() ([]string, []byte, error) {
 	return words, entropy, nil
 }
 
+func MnemonicToSeed(mnemonic, passphrase string) ([]byte, error) {
+	entropy, err := MnemonicToEntropy(mnemonic)
+	if err != nil {
+		return nil, err
+	}
+	return pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic"+passphrase)), 2048, 64, sha512.New), nil
+}
 func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	wordList := strings.Split(mnemonic, " ")
 	var indices []string
