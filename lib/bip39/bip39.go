@@ -1,6 +1,7 @@
 package bip39
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log"
 	"math"
@@ -20,8 +21,12 @@ func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	var dividerIndex = math.Floor(float64(len(bits))/33) * 32
 	var entropyBits = bits[:int(dividerIndex)]
 	// TODO confirm checksum
-	//var checksumBits = bits[int(dividerIndex):]
+	var checksumBits = bits[int(dividerIndex):]
 	entropy := bitsToBytes(entropyBits)
+	checksum := generateChecksum(entropy)
+	if checksum != checksumBits {
+		log.Fatalf("mismatch checksum. checksum: %b, checksumBits: %b", checksum, checksumBits)
+	}
 	log.Printf("entropy: %x", entropy)
 	return entropy, nil
 }
@@ -29,7 +34,7 @@ func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 func getWordIndex(wordList []string, word string) int64 {
 	for i, w := range wordList {
 		if w == word {
-			return i
+			return int64(i)
 		}
 	}
 	return -1
@@ -57,4 +62,10 @@ func bitsToBytes(bitString string) []byte {
 
 	bs = bs[:i:i]
 	return bs
+}
+
+func generateChecksum(entropy []byte) string {
+	checksumSize := len(entropy) * 8 / 32
+	hashedEntropy := sha256.Sum256(entropy)
+	return fmt.Sprintf("%08b", hashedEntropy[0])[:checksumSize]
 }
