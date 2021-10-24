@@ -1,13 +1,39 @@
 package bip39
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"log"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+func GenerateMnemonic() ([]string, []byte, error) {
+	entropy := make([]byte, 16)
+	if _, err := rand.Read(entropy); err != nil {
+		return nil, nil, errors.New(fmt.Sprintf("Failed generate entropy: %s", err.Error()))
+	}
+	if len(entropy) < 16 || len(entropy) > 32 || len(entropy)%4 != 0 {
+		return nil, nil, errors.New(fmt.Sprintf("Invalid entropy: %x", entropy))
+	}
+	entropyBits := bytesToBits(entropy)
+	checksumBits := generateChecksum(entropy)
+	bits := entropyBits + checksumBits
+	chunks := regexp.MustCompile(".{1,11}").FindAllString(bits, -1)
+	var words []string
+	for _, chunk := range chunks {
+		index, err := strconv.ParseInt(chunk, 2, 64)
+		if err != nil {
+			return nil, nil, err
+		}
+		words = append(words, englishWordList[index])
+	}
+	return words, entropy, nil
+}
 
 func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	wordList := strings.Split(mnemonic, " ")
@@ -62,6 +88,15 @@ func bitsToBytes(bitString string) []byte {
 
 	bs = bs[:i:i]
 	return bs
+}
+
+func bytesToBits(bytes []byte) string {
+	var bits string
+	for _, byte := range bytes {
+		bits += fmt.Sprintf("%08b", byte)
+	}
+
+	return bits
 }
 
 func generateChecksum(entropy []byte) string {

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -92,12 +93,18 @@ to quickly create a Cobra application.`,
 				log.Fatalf("Failed Decode privateKey: %s", err.Error())
 			}
 		} else {
-			_, extendedPrivateKey, err := ed25519.GenerateKey(nil)
+			mnemonic, entropy, err := bip39.GenerateMnemonic()
 			if err != nil {
-				log.Fatalf("Failed GenerateKey", err)
+				log.Fatalf("Failed GenerateMnemonic: %s", err.Error())
 			}
+			seed := pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic")), 2048, 64, sha512.New)
+			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
 			privateKey = extendedPrivateKey[:32]
 			publicKey = extendedPrivateKey[32:]
+			data = [][]string{
+				{"entropy", fmt.Sprintf("%x", entropy)},
+				{"mnemonic", fmt.Sprintf("%s", strings.Join(mnemonic, " "))},
+			}
 		}
 
 		ss58Prefix, err := cmd.Flags().GetInt8("ss58Prefix")
