@@ -59,6 +59,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			log.Fatalf("Failed Get ss58Prefix: %s", err.Error())
 		}
+		var data [][]string
 		if stringMnemonic != "" {
 			stringPassphrase, err := cmd.Flags().GetString("passphrase")
 			if err != nil {
@@ -72,6 +73,11 @@ to quickly create a Cobra application.`,
 			extendedPrivateKey := ed25519.NewKeyFromSeed(seed[:32])
 			privateKey = extendedPrivateKey[:32]
 			publicKey = extendedPrivateKey[32:]
+
+			data = [][]string{
+				{"entropy", fmt.Sprintf("%x", entropy)},
+				{"mnemonic", fmt.Sprintf("%s", stringMnemonic)},
+			}
 		} else if stringPrivateKey != "" {
 			p, err := hex.DecodeString(stringPrivateKey)
 			if err != nil {
@@ -100,11 +106,11 @@ to quickly create a Cobra application.`,
 		}
 		address := encode.EncodeAddress(publicKey, ss58Prefix)
 
-		data := [][]string{
+		data = append(data, [][]string{
 			{"PrivateKey", fmt.Sprintf("0x%x", privateKey)},
 			{"PublicKey", fmt.Sprintf("0x%x", publicKey)},
 			{"Address", fmt.Sprintf("%s", address)},
-		}
+		}...)
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetBorder(true)
 		table.AppendBulk(data)
