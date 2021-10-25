@@ -32,13 +32,10 @@ import (
 // createMultisigCmd represents the createMultisig command
 var createMultisigCmd = &cobra.Command{
 	Use:   "createMultisig",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Create multisig address",
+	Long: `Create multisig address. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+address createMultisig --threshold=2 --addresses="1VhsQ5adREGuorYyrKacR5KB4XCkYbCr7YunQW5pAPgiVP9,15FGVSb62LVw4saLnK43PHT1N7fpjcdzTwJYsfuquNfhTeT4".`,
 	Run: func(cmd *cobra.Command, args []string) {
 		addresses, err := cmd.Flags().GetStringSlice("addresses")
 		if err != nil {

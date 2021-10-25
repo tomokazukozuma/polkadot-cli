@@ -28,13 +28,10 @@ import (
 // decodeCmd represents the decode command
 var decodeCmd = &cobra.Command{
 	Use:   "decode",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Decode address",
+	Long: `Decode address. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+address decode --address="1VhsQ5adREGuorYyrKacR5KB4XCkYbCr7YunQW5pAPgiVP9"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		address, err := cmd.Flags().GetString("address")
 		if err != nil {
