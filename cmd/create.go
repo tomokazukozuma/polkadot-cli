@@ -98,7 +98,7 @@ address create --ss58Prefix=0 --mnemonic="food ring street ... shield"`,
 			if err != nil {
 				log.Fatalf("Failed GenerateMnemonic: %s", err.Error())
 			}
-			seed, err := bip39.MnemonicToSeed(stringMnemonic, stringPassphrase)
+			seed, err := bip39.MnemonicToSeed(strings.Join(mnemonic, " "), stringPassphrase)
 			if err != nil {
 				log.Fatalf("Failed MnemonicToSeed: %s", err.Error())
 			}
