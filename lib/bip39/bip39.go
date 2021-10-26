@@ -6,7 +6,6 @@ import (
 	"crypto/sha512"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"regexp"
 	"strconv"
@@ -46,6 +45,7 @@ func MnemonicToSeed(mnemonic, passphrase string) ([]byte, error) {
 	}
 	return pbkdf2.Key(norm.NFKD.Bytes(entropy), norm.NFKD.Bytes([]byte("mnemonic"+passphrase)), 2048, 64, sha512.New), nil
 }
+
 func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	wordList := strings.Split(mnemonic, " ")
 	var indices []string
@@ -57,14 +57,13 @@ func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 
 	var dividerIndex = math.Floor(float64(len(bits))/33) * 32
 	var entropyBits = bits[:int(dividerIndex)]
-	// TODO confirm checksum
+
 	var checksumBits = bits[int(dividerIndex):]
 	entropy := bitsToBytes(entropyBits)
 	checksum := generateChecksum(entropy)
 	if checksum != checksumBits {
-		log.Fatalf("mismatch checksum. checksum: %b, checksumBits: %b", checksum, checksumBits)
+		return nil, errors.New(fmt.Sprintf("mismatch checksum. checksum: %b, checksumBits: %b", checksum, checksumBits))
 	}
-	log.Printf("entropy: %x", entropy)
 	return entropy, nil
 }
 
