@@ -1,4 +1,7 @@
 # polkadot-cli
+
+![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
+
 Polkadot CLI in Go
 
 ## Goal
