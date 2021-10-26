@@ -5,6 +5,12 @@
 Polkadot CLI in Go
 
 ## Goal
+
+### Network
+- [ ] Polkadot
+- [ ] Kusama
+- [ ] Westend
+
 ### address
 - [x] `create` Create address
 - [x] `createMultisig` Create multisig address
