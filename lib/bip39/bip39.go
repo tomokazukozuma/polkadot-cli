@@ -31,7 +31,7 @@ func GenerateMnemonic() ([]string, []byte, error) {
 	for _, chunk := range chunks {
 		index, err := strconv.ParseInt(chunk, 2, 64)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.New(err.Error())
 		}
 		words = append(words, englishWordList[index])
 	}

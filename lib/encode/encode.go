@@ -2,6 +2,7 @@ package encode
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/akamensky/base58"
@@ -28,7 +29,7 @@ func DecodeAddress(address string) (publicKey []byte, ss58Prefix int8, err error
 	actualChecksum := raw[len(raw)-4:]
 	checksum := blake2b.Sum512(raw[:len(raw)])
 	if bytes.Equal(actualChecksum, checksum[:]) {
-		return nil, 0, fmt.Errorf("Invalid checksum. actualChecksum: %s, checksum: %s", actualChecksum, checksum)
+		return nil, 0, errors.New(fmt.Sprintf("Invalid checksum. actualChecksum: %s, checksum: %s", actualChecksum, checksum))
 	}
 	return raw[1:33], int8(raw[0]), nil
 }
